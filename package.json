@@ -6,6 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
+    "build:site": "npm run build && node scripts/prepare-pages.mjs",
     "start": "node --loader ts-node/esm src/index.ts",
     "lint": "echo \"Linting not yet configured\"",
     "test": "npm run build && node --test test/game.test.mjs"
