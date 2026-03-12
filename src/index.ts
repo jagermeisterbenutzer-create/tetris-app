@@ -1,4 +1,4 @@
-import { GameState, NextPiecePreview, TetrisCore } from "./game";
+import { GameState, LINES_PER_LEVEL, NextPiecePreview, TetrisCore } from "./game";
 
 type ActionKey =
   | "move-left"
@@ -171,6 +171,8 @@ window.addEventListener("keydown", handleKey);
 
 const computeDropInterval = (level: number) => Math.max(120, 900 - level * 45);
 
+const getLinesToNextLevel = (lines: number) => LINES_PER_LEVEL - (lines % LINES_PER_LEVEL || 0);
+
 let lastDrop = 0;
 
 const renderPreview = (preview: NextPiecePreview | null) => {
@@ -220,10 +222,11 @@ const renderState = (state: GameState) => {
   scoreEl.textContent = state.score.toLocaleString("en-US");
   linesEl.textContent = state.lines.toString();
   levelEl.textContent = state.level.toString();
+  const linesToNextLevel = getLinesToNextLevel(state.lines);
 
   const statusText = state.gameOver
     ? "Game over · tap restart or press R"
-    : `Level ${state.level} · ${state.lines} lines cleared`;
+    : `Level ${state.level} · ${state.lines} lines cleared · ${linesToNextLevel} to next speed`;
   statusLine.textContent = statusText;
 
   overlay.classList.toggle("active", state.gameOver);
@@ -242,7 +245,7 @@ const loop = (time: number) => {
     tetris.tick();
     lastDrop = time;
   }
-  renderState(state);
+  renderState(tetris.getState());
   requestAnimationFrame(loop);
 };
 
