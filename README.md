@@ -3,12 +3,12 @@
 Minimal scaffolding for the Tetris game repository.
 
 ## Overview
-An interactive tetris experience implemented with modern web technologies. This repo will house the core game logic, assets, and deployment workflow for the project.
+An interactive Tetris experience implemented with modern web technologies. This repo houses the core game logic, assets, and deployment workflow for the project.
 
 ## Getting Started
-1. Clone the repository and install any dependencies (e.g., `npm install`).
-2. Implement the rendering layer, game loop, and input handling inside `src/`.
-3. Run the development server or bundler you choose to verify the game in the browser.
+1. Clone the repository and install dependencies via `npm install`.
+2. Run `npm run build` to compile the TypeScript entrypoint into `dist/index.js` and open `public/index.html` in a browser (serve with any static file server).
+3. Use `npm start` to run the source via `ts-node` when iterating locally; the UI will automatically render into `public/index.html` once you refresh.
 
 ## Initial Structure
 - `src/`: game entrypoint, logic, and components.
@@ -22,5 +22,5 @@ An interactive tetris experience implemented with modern web technologies. This 
 3. Keep the game loop, state management, and rendering decoupled for easier testing.
 
 ## Next Steps
-- Flesh out the `src/` directory with the renderer, input manager, and tetrimino definitions.
-- Wire up a build tool (Vite, webpack, etc.) once the core logic is stable.
+- Review UI responsiveness across screens and adjust variables if needed.
+- Connect input handling to touch or gamepad layers if additional control surfaces are required.

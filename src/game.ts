@@ -92,6 +92,12 @@ type CurrentPiece = {
   position: Position;
 };
 
+export type NextPiecePreview = {
+  name: string;
+  color: string;
+  blocks: Position[];
+};
+
 export type GameState = {
   board: (Cell | null)[][];
   currentPiece: {
@@ -101,6 +107,7 @@ export type GameState = {
     position: Position;
     blocks: Position[];
   } | null;
+  nextPiece: NextPiecePreview | null;
   score: number;
   lines: number;
   level: number;
@@ -118,6 +125,18 @@ export class TetrisCore {
 
   constructor(public readonly rows = 20, public readonly cols = 10) {
     this.board = this.createEmptyBoard();
+    this.refillBag();
+    this.spawnPiece();
+  }
+
+  public restart() {
+    this.board = this.createEmptyBoard();
+    this.score = 0;
+    this.lines = 0;
+    this.level = 1;
+    this._gameOver = false;
+    this.current = null;
+    this.bag = [];
     this.refillBag();
     this.spawnPiece();
   }
@@ -164,6 +183,13 @@ export class TetrisCore {
   ): Position[] {
     const rotation = piece.definition.rotations[rotationIndex];
     return rotation.map((block) => ({ x: block.x + position.x, y: block.y + position.y }));
+  }
+
+  private peekNextDefinition(): TetrominoDefinition | null {
+    if (this.bag.length === 0) {
+      this.refillBag();
+    }
+    return this.bag[0] ?? null;
   }
 
   private isColliding(blocks: Position[]): boolean {
@@ -288,9 +314,18 @@ export class TetrisCore {
           blocks: this.getBlockPositions().map((block) => ({ ...block })),
         }
       : null;
+    const nextDefinition = this.peekNextDefinition();
+    const nextPiece = nextDefinition
+      ? {
+          name: nextDefinition.name,
+          color: nextDefinition.color,
+          blocks: nextDefinition.rotations[0].map((block) => ({ ...block })),
+        }
+      : null;
     return {
       board: boardCopy,
       currentPiece,
+      nextPiece,
       score: this.score,
       lines: this.lines,
       level: this.level,
