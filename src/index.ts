@@ -31,9 +31,9 @@ app.innerHTML = `
             <span class="chip">Realtime</span>
           </div>
         </div>
-        <button type="button" class="subtle-btn restart-btn" data-action="restart">Restart</button>
-      </div>
-      <p class="status-line" data-status>Initializing session…</p>
+         <button type="button" class="subtle-btn restart-btn" data-action="restart">Restart</button>
+       </div>
+      <p class="status-line" data-status>Initializing session...</p>
       <div class="board-wrapper">
         <div class="board-grid" data-board aria-label="Tetris board"></div>
         <div class="status-overlay" data-game-over aria-live="assertive">
@@ -45,37 +45,47 @@ app.innerHTML = `
         </div>
       </div>
       <div class="hint-line">
-        <p>Arrow keys, space, and Z/X keep the shapes flowing. Tap the buttons for direct control.</p>
-        <span class="signal">Fluid layout</span>
+        <p>Arrow keys, space, and Z/X keep the shapes flowing. On phones, use the touch pad under the preview.</p>
+        <span class="signal">Phone ready</span>
       </div>
     </article>
     <aside class="side-panel">
-      <div class="stats-grid">
-        <div class="stat">
-          <strong>Score</strong>
-          <span data-score>0</span>
+      <div class="side-top">
+        <div class="stats-grid">
+          <div class="stat">
+            <strong>Score</strong>
+            <span data-score>0</span>
+          </div>
+          <div class="stat">
+            <strong>Lines</strong>
+            <span data-lines>0</span>
+          </div>
+          <div class="stat">
+            <strong>Level</strong>
+            <span data-level>1</span>
+          </div>
         </div>
-        <div class="stat">
-          <strong>Lines</strong>
-          <span data-lines>0</span>
-        </div>
-        <div class="stat">
-          <strong>Level</strong>
-          <span data-level>1</span>
+        <div class="next-preview">
+          <div class="preview-title-line">
+            <p class="preview-title">Next piece</p>
+            <span class="preview-tag" data-next-name>-</span>
+          </div>
+          <div class="preview-grid" data-preview role="presentation"></div>
         </div>
       </div>
-      <div class="next-preview">
-        <div class="preview-title-line">
-          <p class="preview-title">Next piece</p>
-          <span class="preview-tag" data-next-name>—</span>
+      <div class="controls-card">
+        <div class="preview-title-line controls-title-line">
+          <p class="preview-title">Touch controls</p>
+          <span class="preview-tag">Hold move</span>
         </div>
-        <div class="preview-grid" data-preview role="presentation"></div>
-      </div>
-      <div class="controls">
-        <button type="button" class="control-btn" data-action="hard-drop">Hard drop</button>
-        <button type="button" class="control-btn" data-action="soft-drop">Soft push</button>
-        <button type="button" class="subtle-btn" data-action="rotate-left">Rotate Z</button>
-        <button type="button" class="subtle-btn" data-action="rotate-right">Rotate X</button>
+        <div class="controls">
+          <button type="button" class="subtle-btn control-pad-btn" data-action="rotate-left">Rotate L</button>
+          <button type="button" class="control-btn control-pad-btn" data-action="hard-drop">Drop</button>
+          <button type="button" class="subtle-btn control-pad-btn" data-action="rotate-right">Rotate R</button>
+          <button type="button" class="subtle-btn control-pad-btn" data-action="move-left" data-repeat="true">Left</button>
+          <button type="button" class="control-btn control-pad-btn" data-action="soft-drop" data-repeat="true">Down</button>
+          <button type="button" class="subtle-btn control-pad-btn" data-action="move-right" data-repeat="true">Right</button>
+        </div>
         <div class="key-map">
           <span><strong>← →</strong> move</span>
           <span><strong>↓</strong> soft drop</span>
@@ -83,7 +93,7 @@ app.innerHTML = `
           <span><strong>Z / X</strong> rotate</span>
         </div>
       </div>
-      <p class="note">Crafted with layered gradients, purposeful typography, and grid-driven layouts so the UI flexes from phones to wide displays.</p>
+      <p class="note">The layout compresses for phone screens so the board, next piece, and touch controls stay visible together for quick play.</p>
     </aside>
   </section>
 </main>
@@ -137,16 +147,53 @@ const performAction = (action: ActionKey) => {
   renderState(tetris.getState());
 };
 
+const repeatableActions = new Set<ActionKey>(["move-left", "move-right", "soft-drop"]);
+let repeatDelayId: number | null = null;
+let repeatIntervalId: number | null = null;
+
+const stopRepeatingAction = () => {
+  if (repeatDelayId !== null) {
+    window.clearTimeout(repeatDelayId);
+    repeatDelayId = null;
+  }
+  if (repeatIntervalId !== null) {
+    window.clearInterval(repeatIntervalId);
+    repeatIntervalId = null;
+  }
+};
+
 const controlButtons = document.querySelectorAll<HTMLButtonElement>("[data-action]");
 controlButtons.forEach((button) => {
+  const action = button.dataset.action as ActionKey | undefined;
+  if (!action) {
+    return;
+  }
+
+  if (repeatableActions.has(action)) {
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      stopRepeatingAction();
+      performAction(action);
+      repeatDelayId = window.setTimeout(() => {
+        repeatIntervalId = window.setInterval(() => {
+          performAction(action);
+        }, 90);
+      }, 180);
+    });
+
+    ["pointerup", "pointercancel", "pointerleave", "lostpointercapture"].forEach((eventName) => {
+      button.addEventListener(eventName, stopRepeatingAction);
+    });
+    return;
+  }
+
   button.addEventListener("click", () => {
-    const action = button.dataset.action as ActionKey | undefined;
-    if (!action) {
-      return;
-    }
     performAction(action);
   });
 });
+
+window.addEventListener("pointerup", stopRepeatingAction);
+window.addEventListener("blur", stopRepeatingAction);
 
 const keyBindings: Record<string, ActionKey> = {
   ArrowLeft: "move-left",
@@ -181,7 +228,7 @@ const renderPreview = (preview: NextPiecePreview | null) => {
     cell.style.background = "transparent";
   });
   if (!preview) {
-    nextName.textContent = "—";
+    nextName.textContent = "-";
     return;
   }
   nextName.textContent = preview.name;
