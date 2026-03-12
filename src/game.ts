@@ -11,6 +11,12 @@ export type TetrominoDefinition = {
   rotations: Position[][];
 };
 
+export const LINES_PER_LEVEL = 10;
+
+const LINE_CLEAR_POINTS = [0, 100, 300, 500, 800] as const;
+const SOFT_DROP_POINTS = 1;
+const HARD_DROP_POINTS = 2;
+
 const makeRotation = (...coords: Position[]): Position[] => coords;
 
 const TETROMINO_DEFINITIONS: TetrominoDefinition[] = [
@@ -241,9 +247,9 @@ export class TetrisCore {
     }
     const newRows = Array.from({ length: cleared }, () => Array(this.cols).fill(null));
     this.board = [...newRows, ...intactRows];
+    this.score += LINE_CLEAR_POINTS[cleared] * this.level;
     this.lines += cleared;
-    this.score += cleared * cleared * 100;
-    this.level = Math.floor(this.lines / 10) + 1;
+    this.level = Math.floor(this.lines / LINES_PER_LEVEL) + 1;
   }
 
   public move(deltaX: number, deltaY: number) {
@@ -263,15 +269,23 @@ export class TetrisCore {
   }
 
   public softDrop() {
-    return this.move(0, 1);
+    const moved = this.move(0, 1);
+    if (moved) {
+      this.score += SOFT_DROP_POINTS;
+    }
+    return moved;
   }
 
   public hardDrop() {
     if (!this.current) {
       return;
     }
+    let droppedRows = 0;
     while (this.move(0, 1)) {
-      /* empty */
+      droppedRows += 1;
+    }
+    if (droppedRows > 0) {
+      this.score += droppedRows * HARD_DROP_POINTS;
     }
   }
 
@@ -298,7 +312,7 @@ export class TetrisCore {
     if (this._gameOver) {
       return;
     }
-    if (!this.softDrop()) {
+    if (!this.move(0, 1)) {
       return;
     }
   }
