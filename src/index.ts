@@ -1,4 +1,4 @@
-import { GameState, LINES_PER_LEVEL, NextPiecePreview, TetrisCore } from "./game";
+import { GameState, LINES_PER_LEVEL, NextPiecePreview, TetrisCore } from "./game.js";
 
 type ActionKey =
   | "move-left"
