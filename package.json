@@ -8,7 +8,7 @@
     "build": "tsc",
     "start": "node --loader ts-node/esm src/index.ts",
     "lint": "echo \"Linting not yet configured\"",
-    "test": "echo \"Tests not set up\""
+    "test": "npm run build && node --test test/game.test.mjs"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",
